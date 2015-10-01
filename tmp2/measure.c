@@ -5,8 +5,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+
 #define CPUHZ	(2.4*1024*1024*1024) //2.8GHz
+double time_diff(struct timeval x , struct timeval y)
+{
+    double x_ms , y_ms , diff;
+     
+    x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
+    y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
+     
+    diff = (double)y_ms - (double)x_ms;
+     
+    return diff;
+}
 static inline void rdtsc(unsigned int* upper, unsigned int* lower){
+
 	asm volatile("rdtsc"
 		:"=a"(*lower), "=d"(*upper));
 }
@@ -23,13 +37,15 @@ int main(){
 
 	//system call
 	//syscall(SYS_mkdir);
-	for(i=22;i<23;i++)
+struct timeval start,now;  
+ gettimeofday(&start,NULL ); 
+	for(i=20;i<40;i++)
 	{
 		int j=0;
-		for(j=0;j<20;j++)
+//		for(j=0;j<20;j++)
 			sum+=spendtime(i);
 		
-		delta=sum/20;
+		delta=sum;
 	//time check2
 //	rdtsc(&edx2, &eax2);
 
@@ -40,7 +56,9 @@ int main(){
 		printf("%d: time delta(msec, usec): %lf, %lf\n",i, delta, delta*1000.0);
 		sum=0;
 	}
-	return 0;
+gettimeofday(&now,NULL);
+printf("Total time elapsed : %.0lf us\n" , time_diff(start , now) ); 	
+return 0;
 	/*int fd;	
 	struct timeval	start,	now;	
 	gexmeofday(	&start,	NULL	);	
@@ -49,25 +67,26 @@ int main(){
 	print_time_gap(	&start,	&now	);	
 */
 }
-
 double spendtime(int num)
 {
 	unsigned int eax, edx, eax2, edx2;
 	double delta=0;
     int fd1,fd2;
-	//time check
+    struct stat buf;
+    char buf2[255];
+    	//time check
 	//system call
 	switch(num)
 	{
 		case 20:
 			rdtsc(&edx, &eax);
-			syscall(SYS_mkdir,"test1",0755);
+			syscall(SYS_mkdir,"test2",0755);
 			rdtsc(&edx2, &eax2);
 			break;
 
 		case 21:			
 			rdtsc(&edx, &eax);
-			syscall(SYS_rmdir,"test1");
+			syscall(SYS_rmdir,"test2");
 			rdtsc(&edx2, &eax2);
 			break;
 		case 22:		
@@ -91,7 +110,7 @@ double spendtime(int num)
 			break;
 		case 25:			
 			rdtsc(&edx, &eax);
-			syscall(SYS_chroot);
+			syscall(SYS_chroot,"/");
 			rdtsc(&edx2, &eax2);
 			break;
 		case 26:			
@@ -106,12 +125,13 @@ double spendtime(int num)
 			break;
 		case 28:			
 			rdtsc(&edx, &eax);
-			syscall(SYS_lstat);
+			syscall(SYS_lstat,"./password",&buf);
 			rdtsc(&edx2, &eax2);
 			break;
-		case 29:			
+		case 29:	
+            memset(buf2,0x00,255);		
 			rdtsc(&edx, &eax);
-			syscall(SYS_readlink);
+			syscall(SYS_readlink,"/proc/49/exe",buf2,255);
 			rdtsc(&edx2, &eax2);
 			break;
 		case 30:			
@@ -151,7 +171,7 @@ double spendtime(int num)
 			break;
 		case 37:			
 			rdtsc(&edx, &eax);
-			syscall(SYS_mkdir);
+			syscall(SYS_fstatfs);
 			rdtsc(&edx2, &eax2);
 			break;
 		case 38:			
